@@ -22,7 +22,7 @@ sources_en = source_list + '\n\nFrom which source you found us (send the number 
 sources_uz = source_list + '\n\nBizni qaysi manbadan topdingiz (manba raqamini yuboring)'
 
 
-@dispatch.message_handler(commands = ['start', 'help'])
+@dispatch.message_handler(commands = ['start', 'help', 'restart'])
 async def start(message: types.Message):
 	credentials[message['from']['id']] = dict()
 	credentials[message['from']['id']]['restriction'] = False
@@ -58,29 +58,19 @@ async def default_answer(message: types.Message):
 
 @dispatch.message_handler(content_types = types.ContentType.CONTACT)
 async def contact(message: types.Message):
-	global source_list
 	credentials[message['from']['id']]['phone'] = message.contact.phone_number
 
-	keyboard = types.InlineKeyboardMarkup(row_width = 4)
-	keyboard.row(
-		types.InlineKeyboardButton(text = "1", callback_data = "source_1"),
-		types.InlineKeyboardButton(text = '2', callback_data = "source_2"),
-		types.InlineKeyboardButton(text = '3', callback_data = "source_3"),
-		types.InlineKeyboardButton(text = '4', callback_data = "source_4"),
-	)
-	keyboard.row(
-		types.InlineKeyboardButton(text = "5", callback_data = "source_5"),
-		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
-		types.InlineKeyboardButton(text = '7', callback_data = "source_7"),
-		types.InlineKeyboardButton(text = '8', callback_data = "source_8"),
-	)
+	keyboard = types.InlineKeyboardMarkup(row_width = 1)
+	keyboard.add(types.InlineKeyboardButton(text = "Lactovita", callback_data = "product_Lactovita"))
+	keyboard.add(types.InlineKeyboardButton(text = "Androgard", callback_data = "product_Androgard"))
+	keyboard.add(types.InlineKeyboardButton(text = "Byuti Vit", callback_data = "product_Byuti Vit"))
 
 	if credentials[message['from']['id']]['language'] == 'ru':
-		await message.answer(sources_ru, reply_markup = keyboard)
+		await message.answer("Выберите продукт, который вас интересует", reply_markup = keyboard)
 	elif credentials[message['from']['id']]['language'] == 'en':
-		await message.answer(sources_en, reply_markup = keyboard)
+		await message.answer("Choose the product you interested in", reply_markup = keyboard)
 	elif credentials[message['from']['id']]['language'] == 'uz':
-		await message.answer(sources_uz, reply_markup = keyboard)
+		await message.answer("Sizni qiziqtirgan maxsulotni tanlang", reply_markup = keyboard)
 
 
 
@@ -100,6 +90,37 @@ async def language(call: types.CallbackQuery):
 
 
 
+
+@dispatch.callback_query_handler(lambda data: "product" in data.data)
+async def product(call: types.CallbackQuery):
+	await call.answer()
+	credentials[call['from']['id']]['product'] = call.data.split('product_')[1]
+
+	keyboard = types.InlineKeyboardMarkup(row_width = 4)
+	keyboard.row(
+		types.InlineKeyboardButton(text = "1", callback_data = "source_1"),
+		types.InlineKeyboardButton(text = '2', callback_data = "source_2"),
+		types.InlineKeyboardButton(text = '3', callback_data = "source_3"),
+		types.InlineKeyboardButton(text = '4', callback_data = "source_4"),
+	)
+	keyboard.row(
+		types.InlineKeyboardButton(text = "5", callback_data = "source_5"),
+		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
+		types.InlineKeyboardButton(text = '7', callback_data = "source_7"),
+		types.InlineKeyboardButton(text = '8', callback_data = "source_8"),
+	)
+
+	if credentials[call['from']['id']]['language'] == 'ru':
+		await call.message.answer(sources_ru, reply_markup = keyboard)
+	elif credentials[call['from']['id']]['language'] == 'en':
+		await call.message.answer(sources_en, reply_markup = keyboard)
+	elif credentials[call['from']['id']]['language'] == 'uz':
+		await call.message.answer(sources_uz, reply_markup = keyboard)
+
+
+
+
+
 @dispatch.callback_query_handler(lambda data: "source" in data.data)
 async def source(call: types.CallbackQuery):
 	await call.answer()
@@ -107,11 +128,11 @@ async def source(call: types.CallbackQuery):
 	request = requests.post(domain, data = json.dumps(credentials[call['from']['id']]))
 	if (request.status_code == 200):
 		if credentials[call['from']['id']]['language'] == 'ru':
-			template = f"Заявка отправлена:\n\nИмя: {credentials[call['from']['id']]['name']}\nТелефон: {credentials[call['from']['id']]['phone']}\nИсточник: {channels_list[credentials[call['from']['id']]['source']]}"
+			template = f"Заявка отправлена:\n\nИмя: {credentials[call['from']['id']]['name']}\nТелефон: {credentials[call['from']['id']]['phone']}\nПродукт: {credentials[call['from']['id']]['product']}\nИсточник: {channels_list[credentials[call['from']['id']]['source']]}"
 		elif credentials[call['from']['id']]['language'] == 'en':
-			template = f"Application sent:\n\nName: {credentials[call['from']['id']]['name']}\nPhone: {credentials[call['from']['id']]['phone']}\nSource: {channels_list[credentials[call['from']['id']]['source']]}"
+			template = f"Application sent:\n\nName: {credentials[call['from']['id']]['name']}\nPhone: {credentials[call['from']['id']]['phone']}\nProduct: {credentials[call['from']['id']]['product']}\nSource: {channels_list[credentials[call['from']['id']]['source']]}"
 		elif credentials[call['from']['id']]['language'] == 'uz':
-			template = f"Arizangiz jonatildi:\n\nIsm: {credentials[call['from']['id']]['name']}\nTelefon raqam: {credentials[call['from']['id']]['phone']}\nManbada: {channels_list[credentials[call['from']['id']]['source']]}"
+			template = f"Arizangiz jonatildi:\n\nIsm: {credentials[call['from']['id']]['name']}\nTelefon raqam: {credentials[call['from']['id']]['phone']}\nMaxsulot: {credentials[call['from']['id']]['product']}\nManbada: {channels_list[credentials[call['from']['id']]['source']]}"
 		await call.message.answer(template, reply_markup = types.ReplyKeyboardRemove())
 	else:
 		if credentials[call['from']['id']]['language'] == 'ru':
@@ -120,7 +141,6 @@ async def source(call: types.CallbackQuery):
 			await call.message.answer('Something went wrong ☹️, please try again later')
 		elif credentials[call['from']['id']]['language'] == 'uz':
 			await call.message.answer('Nimadir xato ketdi ☹️, keyinroq qayta urinib ko‘ring')
-
 
 
 if __name__ == '__main__':

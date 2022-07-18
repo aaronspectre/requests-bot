@@ -60,7 +60,7 @@ async def contact(message: types.Message):
 
 	request = requests.post(domain, data = json.dumps(credentials[message['from']['id']]))
 	if (request.status_code == 200):
-		await message.answer(template)
+		await message.answer(template, reply_markup = types.ReplyKeyboardRemove())
 	else:
 		await message.answer(':(')
 

@@ -5,11 +5,21 @@ from aiogram import Bot, Dispatcher, executor, types
 
 BOT_TOKEN = '5316381275:AAF5wpb3Xf2lLQspDLedThfMOTyui4SQy1U'
 domain = 'https://bid.pythonanywhere.com/api/create'
+# domain = 'http://localhost:8000/api/create'
 bot = Bot(token = BOT_TOKEN)
 dispatch = Dispatcher(bot)
 
 
 credentials = dict()
+source_list = str()
+channels_list = ['@Axbarot_live', '@TYUZBEK', '@shopirlar', '@YOL_YOLAKAY', '@Salomatlik_sirlari', '@Samarqand_Samarqandliklar_24', '@Uznext', '@Ginekologiya']
+channels_list.sort()
+for i in channels_list:
+	source_list += f'{channels_list.index(i)+1}. {i}\n'
+
+sources_ru = source_list + '\n\nИз какого источника вы нас нашли (отправьте номер источника)'
+sources_en = source_list + '\n\nFrom which source you found us (send the number of source)'
+sources_uz = source_list + '\n\nBizni qaysi manbadan topdingiz (manba raqamini yuboring)'
 
 
 @dispatch.message_handler(commands = ['start', 'help'])
@@ -40,7 +50,7 @@ async def default_answer(message: types.Message):
 	elif credentials[message['from']['id']]['language'] == 'en':
 		keyboard.add(types.KeyboardButton('☎️ Share', request_contact = True))
 		await message.answer('Please send your phone number', reply_markup = keyboard)
-	elif credentials[message['from']['id']]['language'] == 'ru':
+	elif credentials[message['from']['id']]['language'] == 'uz':
 		keyboard.add(types.KeyboardButton("☎️ Jo'natish", request_contact = True))
 		await message.answer("Iltimos telefon raqamingizni jo'nating", reply_markup = keyboard)
 
@@ -48,21 +58,29 @@ async def default_answer(message: types.Message):
 
 @dispatch.message_handler(content_types = types.ContentType.CONTACT)
 async def contact(message: types.Message):
+	global source_list
 	credentials[message['from']['id']]['phone'] = message.contact.phone_number
-	print(credentials[message['from']['id']])
+
+	keyboard = types.InlineKeyboardMarkup(row_width = 4)
+	keyboard.row(
+		types.InlineKeyboardButton(text = "1", callback_data = "source_1"),
+		types.InlineKeyboardButton(text = '2', callback_data = "source_2"),
+		types.InlineKeyboardButton(text = '3', callback_data = "source_3"),
+		types.InlineKeyboardButton(text = '4', callback_data = "source_4"),
+	)
+	keyboard.row(
+		types.InlineKeyboardButton(text = "5", callback_data = "source_5"),
+		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
+		types.InlineKeyboardButton(text = '7', callback_data = "source_7"),
+		types.InlineKeyboardButton(text = '8', callback_data = "source_8"),
+	)
 
 	if credentials[message['from']['id']]['language'] == 'ru':
-		template = f"Заявка отправлена:\n\nИмя: {credentials[message['from']['id']]['name']}\nТелефон: {credentials[message['from']['id']]['phone']}"
+		await message.answer(sources_ru, reply_markup = keyboard)
 	elif credentials[message['from']['id']]['language'] == 'en':
-		template = f"Application sent:\n\nName: {credentials[message['from']['id']]['name']}\nPhone: {credentials[message['from']['id']]['phone']}"
-	elif credentials[message['from']['id']]['language'] == 'ru':
-		template = f"Arizangiz jonatildi:\n\nIsm: {credentials[message['from']['id']]['name']}\nTelefon raqam: {credentials[message['from']['id']]['phone']}"
-
-	request = requests.post(domain, data = json.dumps(credentials[message['from']['id']]))
-	if (request.status_code == 200):
-		await message.answer(template, reply_markup = types.ReplyKeyboardRemove())
-	else:
-		await message.answer(':(')
+		await message.answer(sources_en, reply_markup = keyboard)
+	elif credentials[message['from']['id']]['language'] == 'uz':
+		await message.answer(sources_uz, reply_markup = keyboard)
 
 
 
@@ -79,6 +97,30 @@ async def language(call: types.CallbackQuery):
 	elif 'uz' in call.data:
 		credentials[call['from']['id']]['language'] = 'uz'
 		await call.message.answer("Iltimos to'liq ismingizni jo'nating")
+
+
+
+@dispatch.callback_query_handler(lambda data: "source" in data.data)
+async def source(call: types.CallbackQuery):
+	await call.answer()
+	credentials[call['from']['id']]['source'] = int(call.data.split('source_')[1])-1
+	request = requests.post(domain, data = json.dumps(credentials[call['from']['id']]))
+	if (request.status_code == 200):
+		if credentials[call['from']['id']]['language'] == 'ru':
+			template = f"Заявка отправлена:\n\nИмя: {credentials[call['from']['id']]['name']}\nТелефон: {credentials[call['from']['id']]['phone']}\nИсточник: {channels_list[credentials[call['from']['id']]['source']]}"
+		elif credentials[call['from']['id']]['language'] == 'en':
+			template = f"Application sent:\n\nName: {credentials[call['from']['id']]['name']}\nPhone: {credentials[call['from']['id']]['phone']}\nSource: {channels_list[credentials[call['from']['id']]['source']]}"
+		elif credentials[call['from']['id']]['language'] == 'uz':
+			template = f"Arizangiz jonatildi:\n\nIsm: {credentials[call['from']['id']]['name']}\nTelefon raqam: {credentials[call['from']['id']]['phone']}\nManbada: {channels_list[credentials[call['from']['id']]['source']]}"
+		await call.message.answer(template, reply_markup = types.ReplyKeyboardRemove())
+	else:
+		if credentials[call['from']['id']]['language'] == 'ru':
+			await call.message.answer('Что-то пошло не так ☹️, повторите попытку позже')
+		elif credentials[call['from']['id']]['language'] == 'en':
+			await call.message.answer('Something went wrong ☹️, please try again later')
+		elif credentials[call['from']['id']]['language'] == 'uz':
+			await call.message.answer('Nimadir xato ketdi ☹️, keyinroq qayta urinib ko‘ring')
+
 
 
 if __name__ == '__main__':

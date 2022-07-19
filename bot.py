@@ -12,7 +12,7 @@ dispatch = Dispatcher(bot)
 
 credentials = dict()
 source_list = str()
-channels_list = ['@Axbarot_live', '@TYUZBEK', '@shopirlar', '@YOL_YOLAKAY', '@Salomatlik_sirlari', '@Samarqand_Samarqandliklar_24', '@Uznext', '@Ginekologiya']
+channels_list = ['@Axbarot_live', '@TYUZBEK', '@shopirlar', '@YOL_YOLAKAY', '@Salomatlik_sirlari', '@Samarqand_Samarqandliklar_24', '@Uznext', '@Ginekologiya', '@UnchaMuncha', '@tezkorxabarlar']
 channels_list.sort()
 for i in channels_list:
 	source_list += f'{channels_list.index(i)+1}. {i}\n'

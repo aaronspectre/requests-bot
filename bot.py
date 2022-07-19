@@ -102,12 +102,14 @@ async def product(call: types.CallbackQuery):
 		types.InlineKeyboardButton(text = '2', callback_data = "source_2"),
 		types.InlineKeyboardButton(text = '3', callback_data = "source_3"),
 		types.InlineKeyboardButton(text = '4', callback_data = "source_4"),
+		types.InlineKeyboardButton(text = '5', callback_data = "source_5"),
 	)
 	keyboard.row(
-		types.InlineKeyboardButton(text = "5", callback_data = "source_5"),
 		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
 		types.InlineKeyboardButton(text = '7', callback_data = "source_7"),
 		types.InlineKeyboardButton(text = '8', callback_data = "source_8"),
+		types.InlineKeyboardButton(text = "9", callback_data = "source_9"),
+		types.InlineKeyboardButton(text = '10', callback_data = "source_10"),
 	)
 
 	if credentials[call['from']['id']]['language'] == 'ru':

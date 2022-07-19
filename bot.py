@@ -12,7 +12,7 @@ dispatch = Dispatcher(bot)
 
 credentials = dict()
 source_list = str()
-channels_list = ['@Axbarot_live', '@TYUZBEK', '@shopirlar', '@YOL_YOLAKAY', '@Salomatlik_sirlari', '@Samarqand_Samarqandliklar_24', '@Uznext', '@Ginekologiya', '@UnchaMuncha', '@tezkorxabarlar']
+channels_list = ['@Axbarot_live', '@TYUZBEK', '@shopirlar', '@YOL_YOLAKAY', '@Salomatlik_sirlari', '@Samarqand_Samarqandliklar_24', '@Uznext', '@Ginekologiya', '@UnchaMuncha', '@tezkorxabarlar', '@latifalar_uz', '@Onalar_kanali']
 channels_list.sort()
 for i in channels_list:
 	source_list += f'{channels_list.index(i)+1}. {i}\n'
@@ -103,13 +103,15 @@ async def product(call: types.CallbackQuery):
 		types.InlineKeyboardButton(text = '3', callback_data = "source_3"),
 		types.InlineKeyboardButton(text = '4', callback_data = "source_4"),
 		types.InlineKeyboardButton(text = '5', callback_data = "source_5"),
+		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
 	)
 	keyboard.row(
-		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
 		types.InlineKeyboardButton(text = '7', callback_data = "source_7"),
 		types.InlineKeyboardButton(text = '8', callback_data = "source_8"),
 		types.InlineKeyboardButton(text = "9", callback_data = "source_9"),
 		types.InlineKeyboardButton(text = '10', callback_data = "source_10"),
+		types.InlineKeyboardButton(text = '11', callback_data = "source_11"),
+		types.InlineKeyboardButton(text = '12', callback_data = "source_12"),
 	)
 
 	if credentials[call['from']['id']]['language'] == 'ru':

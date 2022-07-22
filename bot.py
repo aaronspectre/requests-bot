@@ -11,15 +11,6 @@ dispatch = Dispatcher(bot)
 
 
 credentials = dict()
-source_list = str()
-channels_list = ['@Axbarot_live', '@TYUZBEK', '@shopirlar', '@YOL_YOLAKAY', '@Salomatlik_sirlari', '@Samarqand_Samarqandliklar_24', '@Uznext', '@Ginekologiya', '@UnchaMuncha', '@tezkorxabarlar', '@latifalar_uz', '@Onalar_kanali']
-channels_list.sort()
-for i in channels_list:
-	source_list += f'{channels_list.index(i)+1}. {i}\n'
-
-sources_ru = source_list + '\n\nИз какого источника вы нас нашли (отправьте номер источника)'
-sources_en = source_list + '\n\nFrom which source you found us (send the number of source)'
-sources_uz = source_list + '\n\nBizni qaysi manbadan topdingiz (manba raqamini yuboring)'
 
 
 @dispatch.message_handler(commands = ['start', 'help', 'restart'])
@@ -97,29 +88,19 @@ async def product(call: types.CallbackQuery):
 	credentials[call['from']['id']]['product'] = call.data.split('product_')[1]
 
 	keyboard = types.InlineKeyboardMarkup(row_width = 4)
-	keyboard.row(
-		types.InlineKeyboardButton(text = "1", callback_data = "source_1"),
-		types.InlineKeyboardButton(text = '2', callback_data = "source_2"),
-		types.InlineKeyboardButton(text = '3', callback_data = "source_3"),
-		types.InlineKeyboardButton(text = '4', callback_data = "source_4"),
-		types.InlineKeyboardButton(text = '5', callback_data = "source_5"),
-		types.InlineKeyboardButton(text = '6', callback_data = "source_6"),
-	)
-	keyboard.row(
-		types.InlineKeyboardButton(text = '7', callback_data = "source_7"),
-		types.InlineKeyboardButton(text = '8', callback_data = "source_8"),
-		types.InlineKeyboardButton(text = "9", callback_data = "source_9"),
-		types.InlineKeyboardButton(text = '10', callback_data = "source_10"),
-		types.InlineKeyboardButton(text = '11', callback_data = "source_11"),
-		types.InlineKeyboardButton(text = '12', callback_data = "source_12"),
-	)
+	source_list = str()
+	channels_list = json.loads(requests.get('https://bid.pythonanywhere.com/api/sources').text)
+	for channel in channels_list:
+		source_list += f'{channels_list.index(channel)+1}. {channel}\n'
+		keyboard.insert(types.InlineKeyboardButton(text = channel, callback_data = f"source_{channel}"))
+
 
 	if credentials[call['from']['id']]['language'] == 'ru':
-		await call.message.answer(sources_ru, reply_markup = keyboard)
+		await call.message.answer(source_list + '\n\nИз какого источника вы нас нашли (отправьте номер источника)', reply_markup = keyboard)
 	elif credentials[call['from']['id']]['language'] == 'en':
-		await call.message.answer(sources_en, reply_markup = keyboard)
+		await call.message.answer(source_list + '\n\nFrom which source you found us (send the number of source)', reply_markup = keyboard)
 	elif credentials[call['from']['id']]['language'] == 'uz':
-		await call.message.answer(sources_uz, reply_markup = keyboard)
+		await call.message.answer(source_list + '\n\nBizni qaysi manbadan topdingiz (manba raqamini yuboring)', reply_markup = keyboard)
 
 
 
@@ -128,15 +109,15 @@ async def product(call: types.CallbackQuery):
 @dispatch.callback_query_handler(lambda data: "source" in data.data)
 async def source(call: types.CallbackQuery):
 	await call.answer()
-	credentials[call['from']['id']]['source'] = int(call.data.split('source_')[1])-1
+	credentials[call['from']['id']]['source'] = call.data.split('source_')[1]
 	request = requests.post(domain, data = json.dumps(credentials[call['from']['id']]))
 	if (request.status_code == 200):
 		if credentials[call['from']['id']]['language'] == 'ru':
-			template = f"Заявка отправлена:\n\nИмя: {credentials[call['from']['id']]['name']}\nТелефон: {credentials[call['from']['id']]['phone']}\nПродукт: {credentials[call['from']['id']]['product']}\nИсточник: {channels_list[credentials[call['from']['id']]['source']]}"
+			template = f"Заявка отправлена:\n\nИмя: {credentials[call['from']['id']]['name']}\nТелефон: {credentials[call['from']['id']]['phone']}\nПродукт: {credentials[call['from']['id']]['product']}\nИсточник: {credentials[call['from']['id']]['source']}"
 		elif credentials[call['from']['id']]['language'] == 'en':
-			template = f"Application sent:\n\nName: {credentials[call['from']['id']]['name']}\nPhone: {credentials[call['from']['id']]['phone']}\nProduct: {credentials[call['from']['id']]['product']}\nSource: {channels_list[credentials[call['from']['id']]['source']]}"
+			template = f"Application sent:\n\nName: {credentials[call['from']['id']]['name']}\nPhone: {credentials[call['from']['id']]['phone']}\nProduct: {credentials[call['from']['id']]['product']}\nSource: {credentials[call['from']['id']]['source']}"
 		elif credentials[call['from']['id']]['language'] == 'uz':
-			template = f"Arizangiz jonatildi:\n\nIsm: {credentials[call['from']['id']]['name']}\nTelefon raqam: {credentials[call['from']['id']]['phone']}\nMaxsulot: {credentials[call['from']['id']]['product']}\nManbada: {channels_list[credentials[call['from']['id']]['source']]}"
+			template = f"Arizangiz jonatildi:\n\nIsm: {credentials[call['from']['id']]['name']}\nTelefon raqam: {credentials[call['from']['id']]['phone']}\nMaxsulot: {credentials[call['from']['id']]['product']}\nManbada: {credentials[call['from']['id']]['source']}"
 		await call.message.answer(template, reply_markup = types.ReplyKeyboardRemove())
 	else:
 		if credentials[call['from']['id']]['language'] == 'ru':
